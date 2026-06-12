@@ -1,15 +1,180 @@
-# crazy-max/ghaction-virustotal
+<p align="center"><a href="https://github.com/crazy-max/ghaction-virustotal" target="_blank"><img height="160" src="https://raw.githubusercontent.com/crazy-max/ghaction-virustotal/master/.github/virustotal-github-actions.png"></a></p>
 
-GitHub Action to upload and scan files with VirusTotal
+<p align="center">
+  <a href="https://github.com/crazy-max/ghaction-virustotal/releases/latest"><img src="https://img.shields.io/github/release/crazy-max/ghaction-virustotal.svg?style=flat-square" alt="GitHub release"></a>
+  <a href="https://github.com/marketplace/actions/virustotal-github-action"><img src="https://img.shields.io/badge/marketplace-virustotal--github--action-blue?logo=github&style=flat-square" alt="GitHub marketplace"></a>
+  <a href="https://github.com/crazy-max/ghaction-virustotal/actions?workflow=ci"><img src="https://img.shields.io/github/actions/workflow/status/crazy-max/ghaction-virustotal/ci.yml?branch=master&label=ci&logo=github&style=flat-square" alt="CI workflow"></a>
+  <a href="https://github.com/crazy-max/ghaction-virustotal/actions?workflow=test"><img src="https://img.shields.io/github/actions/workflow/status/crazy-max/ghaction-virustotal/test.yml?branch=master&label=test&logo=github&style=flat-square" alt="Test workflow"></a>
+  <a href="https://codecov.io/gh/crazy-max/ghaction-virustotal"><img src="https://img.shields.io/codecov/c/github/crazy-max/ghaction-virustotal?logo=codecov&style=flat-square" alt="Codecov"></a>
+  <br /><a href="https://github.com/sponsors/crazy-max"><img src="https://img.shields.io/badge/sponsor-crazy--max-181717.svg?logo=github&style=flat-square" alt="Become a sponsor"></a>
+  <a href="https://www.paypal.me/crazyws"><img src="https://img.shields.io/badge/donate-paypal-00457c.svg?logo=paypal&style=flat-square" alt="Donate Paypal"></a>
+</p>
 
-Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at [https://github.com/crazy-max/ghaction-virustotal](https://github.com/crazy-max/ghaction-virustotal).
+## About
 
-## Versions
+GitHub Action to upload and scan files with [VirusTotal](https://www.virustotal.com).
 
-| Version | Tag | Upstream commit |
-|---------|-----|-----------------|
-| v3.3.0 | [`v3.3.0`](https://github.com/chainguard-actions/crazy-max-ghaction-virustotal/tree/v3.3.0) | [`7700025`](https://github.com/crazy-max/ghaction-virustotal/commit/7700025bfded0cf30a9d5753665d502cfe45136c) |
-| v4.2.0 | [`v4.2.0`](https://github.com/chainguard-actions/crazy-max-ghaction-virustotal/tree/v4.2.0) | [`d34968c`](https://github.com/crazy-max/ghaction-virustotal/commit/d34968c958ae283fe976efed637081b9f9dcf74f) |
+___
+
+* [Usage](#usage)
+  * [Scan local files](#scan-local-files)
+  * [Scan assets of a published release](#scan-assets-of-a-published-release)
+  * [Scan through VirusTotal Monitor](#scan-through-virustotal-monitor)
+* [Customizing](#customizing)
+  * [inputs](#inputs)
+  * [outputs](#outputs)
+* [Contributing](#contributing)
+* [License](#license)
+
+## Usage
+
+### Scan local files
+
+This action can be used to scan local files with VirusTotal:
+
+![VirusTotal GitHub Action](.github/ghaction-virustotal-files.png)
+
+```yaml
+name: build
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v4
+      -
+        name: Set up Go
+        uses: actions/setup-go@v4
+      -
+        name: Build
+        run: |
+          GOOS=windows GOARCH=386 go build -o ./ghaction-virustotal-win32.exe -v -ldflags "-s -w"
+          GOOS=windows GOARCH=amd64 go build -o ./ghaction-virustotal-win64.exe -v -ldflags "-s -w"
+      -
+        name: VirusTotal Scan
+        uses: crazy-max/ghaction-virustotal@v4
+        with:
+          vt_api_key: ${{ secrets.VT_API_KEY }}
+          files: |
+            ./ghaction-virustotal-win32.exe
+            ./ghaction-virustotal-win64.exe
+```
+
+### Scan assets of a published release
+
+You can also use this action to scan assets of a published release on GitHub
+when a [release event](https://help.github.com/en/actions/reference/events-that-trigger-workflows#release-event-release)
+is triggered:
+
+```yaml
+name: released
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  virustotal:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: VirusTotal Scan
+        uses: crazy-max/ghaction-virustotal@v4
+        with:
+          vt_api_key: ${{ secrets.VT_API_KEY }}
+          files: |
+            .exe$
+```
+
+If you set `update_release_body: true` input, analysis link(s) will be appended
+to the release body and will look like this:
+
+![VirusTotal GitHub Action update release body](.github/ghaction-virustotal-release-body.png)
+
+### Scan through VirusTotal Monitor
+
+To scan your assets through VirusTotal Monitor you can use the following
+workflow:
+
+```yaml
+name: build
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v4
+      -
+        name: Set up Go
+        uses: actions/setup-go@v4
+      -
+        name: Build
+        run: |
+          GOOS=windows GOARCH=386 go build -o ./ghaction-virustotal-win32.exe -v -ldflags "-s -w"
+          GOOS=windows GOARCH=amd64 go build -o ./ghaction-virustotal-win64.exe -v -ldflags "-s -w"
+      -
+        name: VirusTotal Monitor Scan
+        uses: crazy-max/ghaction-virustotal@v4
+        with:
+          vt_api_key: ${{ secrets.VT_API_KEY }}
+          vt_monitor: true
+          monitor_path: /ghaction-virustotal
+          files: |
+            ./ghaction-virustotal-*.exe
+```
+
+## Customizing
+
+### inputs
+
+Following inputs can be used as `step.with` keys
+
+| Name                       | Type   | Default | Description                                                                                                                                                                                               |
+|----------------------------|--------|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `vt_api_key`               | String |         | [VirusTotal API key](https://developers.virustotal.com/v3.0/reference#authentication) to upload assets (**required**)                                                                                     |
+| `files`                    | String |         | Newline-delimited list of path globs/patterns for asset files to upload for analysis (**required**)                                                                                                       |
+| `vt_monitor`               | Bool   | `false` | If enabled, files will be uploaded to [VirusTotal Monitor](https://developers.virustotal.com/v3.0/reference#monitor) endpoint                                                                             |
+| `monitor_path`**¹**        | String | `/`     | A path relative to current monitor user root folder to upload files                                                                                                                                       |
+| `update_release_body`**²** | Bool   | `false` | If enabled, analysis link(s) will be appended to the release body                                                                                                                                         |
+| `github_token`**³**        | String |         | [GitHub Token](https://help.github.com/en/actions/configuring-and-managing-workflows/authenticating-with-the-github_token) used to create an authenticated client for GitHub API as provided by `secrets` |
+| `request_rate`             | Number | `0`     | API request-rate in requests/minute. Set to `4` or lower when using the standard free public API. `0` to disable rate-limit.                                                                              |
+
+> * **¹** Only available if `vt_monitor` is enabled.
+> * **²** Only available if [release event is triggered](#scan-assets-of-a-published-release) in your workflow.
+> * **³** Required if [release event is triggered](#scan-assets-of-a-published-release) in your workflow.
+
+### outputs
+
+The following outputs are available
+
+| Name          | Type    | Description                                                                |
+|---------------|---------|----------------------------------------------------------------------------|
+| `analysis`    | String  | Analysis results formatted as `<filename>=<analysisURL>` (comma separated) |
+
+## Contributing
+
+Want to contribute? Awesome! The most basic way to show your support is to star
+the project, or to raise issues. You can also support this project by [**becoming a sponsor on GitHub**](https://github.com/sponsors/crazy-max)
+or by making a [PayPal donation](https://www.paypal.me/crazyws) to ensure this
+journey continues indefinitely!
+
+Thanks again for your support, it is much appreciated! :pray:
+
+## License
+
+MIT. See `LICENSE` for more details.
 
 ## Privacy
 
