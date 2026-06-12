@@ -12,6 +12,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 | v4.0.0 | [`v4.0.0`](https://github.com/chainguard-actions/crazy-max-ghaction-virustotal/tree/v4.0.0) | [`92a6081`](https://github.com/crazy-max/ghaction-virustotal/commit/92a6081d9aab8f8ef3d9081e8bb264aaccc9e74d) |
 | v4.1.0 | [`v4.1.0`](https://github.com/chainguard-actions/crazy-max-ghaction-virustotal/tree/v4.1.0) | [`93ce6fb`](https://github.com/crazy-max/ghaction-virustotal/commit/93ce6fb8ca09fed3d3d2010a8be65552ae5d3854) |
 | v4.2.0 | [`v4.2.0`](https://github.com/chainguard-actions/crazy-max-ghaction-virustotal/tree/v4.2.0) | [`d34968c`](https://github.com/crazy-max/ghaction-virustotal/commit/d34968c958ae283fe976efed637081b9f9dcf74f) |
+| v5.0.0 | [`v5.0.0`](https://github.com/chainguard-actions/crazy-max-ghaction-virustotal/tree/v5.0.0) | [`936d8c5`](https://github.com/crazy-max/ghaction-virustotal/commit/936d8c5c00afe97d3d9a1af26d017cfdf26800a2) |
 
 ## Privacy
 
