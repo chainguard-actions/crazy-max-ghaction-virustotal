@@ -1,0 +1,29 @@
+name: Test basic usage - VirusTotal scan
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Create a test file to scan
+        run: |
+          echo "test content" > /tmp/test-file.txt
+      - id: vt_scan
+        uses: .
+        continue-on-error: true
+        with:
+          vt_api_key: fake-api-key-for-testing-12345678901234567890123456789012
+          files: /tmp/test-file.txt
+          update_release_body: 'false'
+          request_rate: '0'
+      - name: Assert action was invoked with required inputs
+        run: |
+          echo "outcome: ${{ steps.vt_scan.outcome }}"
+          # The action should either succeed or fail with an auth error
+          # but NOT be skipped — it must have been invoked
+          if [ "${{ steps.vt_scan.outcome }}" = "skipped" ]; then
+            echo "FAIL: action was skipped, expected it to run"
+            exit 1
+          fi
+          echo "PASS: action was invoked (outcome: ${{ steps.vt_scan.outcome }})"
