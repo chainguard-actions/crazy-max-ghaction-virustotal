@@ -1,0 +1,31 @@
+name: Test request rate input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          vt_api_key: fake-api-key-for-testing
+          files: '*.nonexistent_extension_xyz'
+          update_release_body: 'false'
+          request_rate: '4'
+      - name: Assert action succeeds with rate limit set and no files to scan
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          ANALYSIS: ${{ steps.action.outputs.analysis }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "analysis: '$ANALYSIS'"
+          if [ "$OUTCOME" != "success" ]; then
+            echo "FAIL: expected action to succeed when no files match and rate limit is set, but got outcome=$OUTCOME"
+            exit 1
+          fi
+          if [ -n "$ANALYSIS" ]; then
+            echo "FAIL: expected empty analysis output when no files match, but got: $ANALYSIS"
+            exit 1
+          fi
+          echo "PASS: action succeeded with request_rate=4 and no matching files"

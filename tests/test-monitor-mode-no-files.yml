@@ -1,0 +1,26 @@
+name: Test monitor mode with no matching files
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          vt_api_key: fake-api-key-for-testing
+          files: '*.nonexistent_extension_xyz'
+          vt_monitor: 'true'
+          monitor_path: '/test-uploads'
+          update_release_body: 'false'
+      - name: Assert analysis output is empty when no files match in monitor mode
+        env:
+          ANALYSIS: ${{ steps.action.outputs.analysis }}
+        run: |
+          echo "analysis: '$ANALYSIS'"
+          if [ -n "$ANALYSIS" ]; then
+            echo "FAIL: expected empty analysis output when no files match glob in monitor mode, but got: $ANALYSIS"
+            exit 1
+          fi
+          echo "PASS: analysis output is empty as expected in monitor mode when no files match"
