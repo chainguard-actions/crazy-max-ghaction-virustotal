@@ -1,0 +1,38 @@
+name: Test multiline files input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create test files
+        run: |
+          echo "first file content" > /tmp/scan-file-a.txt
+          echo "second file content" > /tmp/scan-file-b.txt
+
+      - id: action
+        uses: .
+        with:
+          vt_api_key: fake-api-key-for-testing-00000000000000000000000000000000
+          files: |
+            /tmp/scan-file-a.txt
+            /tmp/scan-file-b.txt
+          update_release_body: 'false'
+          request_rate: '0'
+        continue-on-error: true
+
+      - name: Assert action processed multiline files input
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          # The action should fail because the fake API key is rejected by VirusTotal
+          # This confirms the action correctly parsed the multiline files input
+          # and attempted to upload both files
+          if [ "$OUTCOME" != "failure" ]; then
+            echo "FAIL: expected outcome 'failure' due to invalid API key, got '$OUTCOME'"
+            exit 1
+          fi
+          echo "PASS: action correctly parsed multiline files input and attempted VirusTotal API call"

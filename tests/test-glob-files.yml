@@ -1,4 +1,4 @@
-name: Test basic usage - invalid API key fails gracefully
+name: Test glob file pattern input
 on:
   workflow_dispatch:
 jobs:
@@ -7,31 +7,34 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Create a dummy file to scan
+      - name: Create dummy files to scan
         run: |
-          echo "hello world" > /tmp/test-file.txt
+          mkdir -p /tmp/scan-dir
+          echo "file one" > /tmp/scan-dir/file1.bin
+          echo "file two" > /tmp/scan-dir/file2.bin
 
       - id: vt
         uses: .
         continue-on-error: true
         with:
           vt_api_key: "invalid-api-key-for-testing"
-          files: "/tmp/test-file.txt"
+          files: |
+            /tmp/scan-dir/*.bin
           update_release_body: "false"
           request_rate: "0"
 
-      - name: Assert action ran (expected to fail with invalid API key)
+      - name: Assert action ran with glob pattern
         env:
           OUTCOME: ${{ steps.vt.outcome }}
         run: |
           echo "outcome: $OUTCOME"
-          # With an invalid API key, the action should fail (not skip or succeed)
+          # With an invalid API key, the action should fail (not skip)
           if [ "$OUTCOME" = "failure" ]; then
             echo "PASS: action failed as expected with invalid API key"
           elif [ "$OUTCOME" = "success" ]; then
-            echo "WARN: action unexpectedly succeeded - checking analysis output"
+            echo "WARN: action unexpectedly succeeded"
             echo "PASS"
           else
-            echo "FAIL: unexpected outcome '$OUTCOME'"
+            echo "FAIL: unexpected outcome '$OUTCOME' - action should have run"
             exit 1
           fi

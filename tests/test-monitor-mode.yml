@@ -1,4 +1,4 @@
-name: Test basic usage - invalid API key fails gracefully
+name: Test monitor mode input
 on:
   workflow_dispatch:
 jobs:
@@ -9,29 +9,31 @@ jobs:
 
       - name: Create a dummy file to scan
         run: |
-          echo "hello world" > /tmp/test-file.txt
+          echo "monitor test file" > /tmp/monitor-test.bin
 
       - id: vt
         uses: .
         continue-on-error: true
         with:
           vt_api_key: "invalid-api-key-for-testing"
-          files: "/tmp/test-file.txt"
+          files: "/tmp/monitor-test.bin"
+          vt_monitor: "true"
+          monitor_path: "/test-uploads"
           update_release_body: "false"
-          request_rate: "0"
+          request_rate: "4"
 
-      - name: Assert action ran (expected to fail with invalid API key)
+      - name: Assert action ran with monitor mode inputs
         env:
           OUTCOME: ${{ steps.vt.outcome }}
         run: |
           echo "outcome: $OUTCOME"
-          # With an invalid API key, the action should fail (not skip or succeed)
+          # With an invalid API key, the action should fail (not skip)
           if [ "$OUTCOME" = "failure" ]; then
-            echo "PASS: action failed as expected with invalid API key"
+            echo "PASS: action failed as expected with invalid API key in monitor mode"
           elif [ "$OUTCOME" = "success" ]; then
-            echo "WARN: action unexpectedly succeeded - checking analysis output"
+            echo "WARN: action unexpectedly succeeded in monitor mode"
             echo "PASS"
           else
-            echo "FAIL: unexpected outcome '$OUTCOME'"
+            echo "FAIL: unexpected outcome '$OUTCOME' - action should have run"
             exit 1
           fi

@@ -1,0 +1,39 @@
+name: Test no files found
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          vt_api_key: fake-api-key-for-testing
+          files: |
+            nonexistent-path-that-will-never-match-*.xyz
+          update_release_body: 'false'
+          request_rate: '0'
+        continue-on-error: true
+
+      - name: Assert action outcome
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          ANALYSIS: ${{ steps.action.outputs.analysis }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "analysis: $ANALYSIS"
+          # When no files match the glob, the action warns but does not fail
+          # It should succeed (outcome == success) with empty analysis output
+          if [ "$OUTCOME" != "success" ]; then
+            echo "FAIL: expected outcome 'success' when no files match glob, got '$OUTCOME'"
+            exit 1
+          fi
+          echo "PASS: action succeeded with no matching files"
+          # Analysis output should be empty when no files were found
+          if [ -n "$ANALYSIS" ]; then
+            echo "FAIL: expected empty analysis output, got '$ANALYSIS'"
+            exit 1
+          fi
+          echo "PASS: analysis output is empty as expected"
