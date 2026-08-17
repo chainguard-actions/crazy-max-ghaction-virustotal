@@ -1,4 +1,4 @@
-name: Test basic usage - invalid API key fails gracefully
+name: Test glob file pattern input
 on:
   workflow_dispatch:
 jobs:
@@ -7,20 +7,22 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Create a test file to scan
+      - name: Create test files matching a glob pattern
         run: |
-          echo "hello world" > /tmp/test-file.txt
+          mkdir -p /tmp/scan-dir
+          echo "binary content 1" > /tmp/scan-dir/file1.bin
+          echo "binary content 2" > /tmp/scan-dir/file2.bin
 
       - id: action
         uses: .
         continue-on-error: true
         with:
           vt_api_key: fake-api-key-for-testing
-          files: /tmp/test-file.txt
+          files: /tmp/scan-dir/*.bin
           update_release_body: 'false'
           request_rate: '0'
 
-      - name: Assert action failed with invalid API key
+      - name: Assert action ran (failed due to invalid API key, not missing files)
         env:
           OUTCOME: ${{ steps.action.outcome }}
         run: |
@@ -29,4 +31,4 @@ jobs:
             echo "FAIL: expected action to fail with invalid API key, got outcome=$OUTCOME"
             exit 1
           fi
-          echo "PASS: action correctly failed with invalid API key"
+          echo "PASS: action correctly failed with invalid API key (not due to missing files)"

@@ -1,0 +1,27 @@
+name: Test no files found (glob matches nothing)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          vt_api_key: fake-api-key-for-testing
+          files: /nonexistent/path/that/matches/nothing/*.bin
+          update_release_body: 'false'
+          request_rate: '0'
+
+      - name: Assert analysis output is empty when no files found
+        env:
+          ACTUAL: ${{ steps.action.outputs.analysis }}
+        run: |
+          echo "actual: '$ACTUAL'"
+          if [ -n "$ACTUAL" ]; then
+            echo "FAIL: expected empty analysis output but got: $ACTUAL"
+            exit 1
+          fi
+          echo "PASS: analysis output is empty as expected when no files match"
