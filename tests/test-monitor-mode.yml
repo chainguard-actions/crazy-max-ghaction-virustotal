@@ -1,4 +1,4 @@
-name: Test basic usage - scan file with VirusTotal
+name: Test VirusTotal Monitor mode
 on:
   workflow_dispatch:
 jobs:
@@ -7,9 +7,9 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Create a test file to scan
+      - name: Create a test file to upload to monitor
         run: |
-          echo "test content for virustotal scan" > /tmp/test-scan-file.txt
+          echo "monitor mode test content" > /tmp/monitor-test-file.txt
 
       - id: action
         uses: .
@@ -17,17 +17,19 @@ jobs:
         with:
           vt_api_key: "0000000000000000000000000000000000000000000000000000000000000000"
           files: |
-            /tmp/test-scan-file.txt
+            /tmp/monitor-test-file.txt
+          vt_monitor: "true"
+          monitor_path: "/test-uploads"
           update_release_body: "false"
           request_rate: "0"
 
-      - name: Assert action ran (outcome is either success or failure due to invalid API key)
+      - name: Assert action ran in monitor mode (outcome is success or failure due to invalid API key)
         env:
           OUTCOME: ${{ steps.action.outcome }}
         run: |
           echo "action outcome: $OUTCOME"
           if [ "$OUTCOME" = "success" ] || [ "$OUTCOME" = "failure" ]; then
-            echo "PASS: action ran and produced an outcome"
+            echo "PASS: action ran in monitor mode and produced an outcome"
           else
             echo "FAIL: unexpected outcome '$OUTCOME'"
             exit 1

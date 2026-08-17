@@ -1,4 +1,4 @@
-name: Test basic usage - scan file with VirusTotal
+name: Test glob pattern file matching
 on:
   workflow_dispatch:
 jobs:
@@ -7,9 +7,11 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Create a test file to scan
+      - name: Create test files to scan via glob
         run: |
-          echo "test content for virustotal scan" > /tmp/test-scan-file.txt
+          mkdir -p /tmp/vt-test-files
+          echo "file one content" > /tmp/vt-test-files/file1.bin
+          echo "file two content" > /tmp/vt-test-files/file2.bin
 
       - id: action
         uses: .
@@ -17,17 +19,17 @@ jobs:
         with:
           vt_api_key: "0000000000000000000000000000000000000000000000000000000000000000"
           files: |
-            /tmp/test-scan-file.txt
+            /tmp/vt-test-files/*.bin
           update_release_body: "false"
           request_rate: "0"
 
-      - name: Assert action ran (outcome is either success or failure due to invalid API key)
+      - name: Assert action ran with glob pattern (outcome is success or failure due to invalid API key)
         env:
           OUTCOME: ${{ steps.action.outcome }}
         run: |
           echo "action outcome: $OUTCOME"
           if [ "$OUTCOME" = "success" ] || [ "$OUTCOME" = "failure" ]; then
-            echo "PASS: action ran and produced an outcome"
+            echo "PASS: action ran and produced an outcome with glob pattern"
           else
             echo "FAIL: unexpected outcome '$OUTCOME'"
             exit 1
