@@ -1,0 +1,34 @@
+name: Test invalid API key causes failure
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create a test file to upload
+        run: |
+          echo "This is a test file for VirusTotal scanning" > /tmp/test-sample.txt
+
+      - id: action
+        name: Run action with invalid API key and a real file
+        uses: .
+        with:
+          vt_api_key: 0000000000000000000000000000000000000000000000000000000000000000
+          files: /tmp/test-sample.txt
+          update_release_body: 'false'
+          request_rate: '0'
+        # Expect failure due to invalid API key
+        continue-on-error: true
+
+      - name: Assert action failed due to invalid API key
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" != "failure" ]; then
+            echo "FAIL: expected action to fail with invalid API key, got outcome: $OUTCOME"
+            exit 1
+          fi
+          echo "PASS: action correctly failed with invalid API key"

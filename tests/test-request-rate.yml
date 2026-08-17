@@ -1,0 +1,36 @@
+name: Test request_rate input is accepted
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        name: Run action with request_rate set and no matching files
+        # With a glob that matches nothing, the action warns and exits cleanly
+        # without ever calling the VirusTotal API, so no real API key needed.
+        uses: .
+        with:
+          vt_api_key: fake-api-key
+          files: /nonexistent/path/no-match-*.bin
+          update_release_body: 'false'
+          request_rate: '4'
+
+      - name: Assert action succeeded (no files found, rate limit configured)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          ACTUAL: ${{ steps.action.outputs.analysis }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "analysis: '$ACTUAL'"
+          if [ "$OUTCOME" != "success" ]; then
+            echo "FAIL: expected action to succeed when no files match (just a warning), got: $OUTCOME"
+            exit 1
+          fi
+          if [ -n "$ACTUAL" ]; then
+            echo "FAIL: expected empty analysis output when no files match, got: $ACTUAL"
+            exit 1
+          fi
+          echo "PASS: action succeeded with request_rate=4 and no matching files"
